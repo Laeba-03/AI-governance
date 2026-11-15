@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Governance &amp; Shadow AI Spend</title>
+<style>
+:root{
+  color-scheme: dark;
+  --ground:#12151B; --surface:#1B1F28; --ink:#EEF0F4; --muted:#A6AEBB;
+  --line:#343B49; --track:#2A303C; --hover:#232934;
+  --green:#6CCB9A; --green-bg:#1C3228;
+  --amber:#F0C060; --amber-fill:#D99A1C; --amber-bg:#3A2E12; --amber-line:#A87A14;
+  --red:#F28B7C; --red-bg:#3B201C; --red-soft:#7A3A31;
+  --side:232px; --tabs:68px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:auto}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:17px;line-height:1.5;font-variant-numeric:tabular-nums}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:6px}
+h1:focus{outline:none}
+.g{color:var(--green)} .a{color:var(--amber)} .r{color:var(--red)}
+.fg{background:var(--green)} .fa{background:var(--amber-fill)} .fr{background:var(--red)}
+.hatch{background:repeating-linear-gradient(135deg,var(--red) 0 3px,var(--red-soft) 3px 6px)}
+
+/* navigation: sidebar on a laptop, bottom tabs on a phone */
+nav{position:fixed;z-index:5;background:var(--surface)}
+nav .brand{font-weight:650;font-size:17px;padding:4px 12px 4px;line-height:1.3}
+nav .when{color:var(--muted);font-size:14px;padding:0 12px 24px}
+nav a{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--muted);border-radius:10px}
+nav a[aria-current="page"]{color:var(--ink);background:var(--hover);font-weight:600}
+nav svg{flex:none}
+main{min-height:100vh}
+.screen{display:none;max-width:760px;margin:0 auto}
+.screen.on{display:block}
+
+@media (min-width:861px){
+  nav{top:0;bottom:0;left:0;width:var(--side);border-right:1px solid var(--line);padding:32px 14px;display:flex;flex-direction:column;gap:4px}
+  nav a{padding:11px 12px;min-height:46px}
+  nav a:hover{background:var(--hover);color:var(--ink)}
+  main{margin-left:var(--side);padding:72px 56px 96px}
+}
+@media (max-width:860px){
+  nav{left:0;right:0;bottom:0;height:calc(var(--tabs) + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);
+    border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr)}
+  nav .brand,nav .when{display:none}
+  nav a{flex-direction:column;justify-content:center;gap:3px;font-size:12px;border-radius:0;min-height:var(--tabs)}
+  nav a[aria-current="page"]{background:none}
+  main{padding:32px 22px calc(var(--tabs) + 48px)}
+  .phonehead{display:block !important}
+}
+.phonehead{display:none;color:var(--muted);font-size:14px;margin:0 0 28px}
+.phonehead b{color:var(--ink);font-weight:650;font-size:16px;display:block}
+
+/* shared pieces */
+h1{margin:0;font-size:clamp(27px,4.2vw,36px);line-height:1.2;font-weight:650;letter-spacing:-0.02em}
+.take{margin:14px 0 0;font-size:19px;max-width:32em}
+.take b{font-weight:650}
+.body{margin-top:clamp(32px,6vh,52px)}
+.next{display:inline-flex;align-items:center;min-height:48px;margin-top:clamp(28px,6vh,48px);color:var(--ink);font-size:17px;font-weight:600;text-underline-offset:4px}
+
+/* overview */
+.alert{display:flex;gap:12px;align-items:flex-start;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber);
+  border-radius:12px;padding:16px 18px;font-weight:600;margin-bottom:clamp(28px,5vh,44px)}
+.alert svg{flex:none;margin-top:3px}
+.facts{margin-bottom:0}
+.fact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 24px;align-items:baseline;border-top:1px solid var(--line);padding:22px 0}
+.fact:last-child{border-bottom:1px solid var(--line)}
+.fact dt{color:var(--muted)}
+.fact dd{margin:0;font-size:clamp(30px,5.4vw,40px);line-height:1.1;font-weight:650;letter-spacing:-0.02em;text-align:right;white-space:nowrap}
+.fact dd small{font-size:.45em;font-weight:500;color:var(--muted);letter-spacing:0}
+.fact .why{grid-column:1 / -1;color:var(--muted);font-size:16px}
+
+/* budget chart */
+.picks{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:26px}
+.picks label{display:grid;gap:5px;font-size:15px;color:var(--muted);flex:1 1 160px}
+select{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-height:50px;color:var(--ink)}
+.lbox{position:relative}
+.lbox svg{width:100%;display:block;overflow:visible}
+.tip{position:absolute;display:none;pointer-events:none;background:var(--ink);color:var(--ground);font-size:15px;padding:7px 11px;border-radius:8px;white-space:nowrap;transform:translate(-50%,calc(-100% - 14px))}
+.ax{stroke:var(--line);stroke-width:1}
+.tk{fill:var(--muted);font-size:14px}
+.lb{fill:var(--ink);font-size:15px;font-weight:650;paint-order:stroke;stroke:var(--ground);stroke-width:5px;stroke-linejoin:round}
+.lb.red{fill:var(--red)} .lb.grn{fill:var(--green)}
+
+/* bars */
+.drow{display:grid;grid-template-columns:118px minmax(0,1fr);gap:6px 16px;align-items:center;padding:16px 0;border-top:1px solid var(--line)}
+.drow:last-child{border-bottom:1px solid var(--line)}
+.drow .nm{font-weight:600}
+.drow .tx{grid-column:2;font-size:16px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.drow .tx b{font-weight:650}
+.bar{position:relative;height:20px;background:var(--track);border-radius:5px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.bar u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.hint{color:var(--muted);font-size:15px;margin:14px 0 0}
+@media (max-width:480px){ .drow{grid-template-columns:minmax(0,1fr)} .drow .tx{grid-column:1} }
+
+/* approved vs unapproved */
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:30px}
+.side{border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.side h2{margin:0 0 6px;font-size:16px;font-weight:650}
+.side .n{font-size:clamp(28px,6vw,38px);font-weight:650;line-height:1.15;letter-spacing:-0.02em}
+.side p{margin:4px 0 0;font-size:16px;color:var(--muted)}
+.sub{margin:0 0 4px;color:var(--muted);font-size:16px}
+
+/* tool list and detail */
+.group{margin:34px 0 0;font-size:16px;font-weight:600;color:var(--muted)}
+.group:first-child{margin-top:0}
+.tool{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 16px;align-items:center;width:100%;text-align:left;text-decoration:none;
+  border-top:1px solid var(--line);padding:16px 4px;min-height:72px}
+.tool:hover{background:var(--hover)}
+.tool .nm{font-weight:650}
+.tool .ds{grid-column:1;color:var(--muted);font-size:16px}
+.tool .go{grid-row:1 / span 2;grid-column:2;display:flex;align-items:center;gap:12px;color:var(--muted)}
+.list .tool:last-of-type{border-bottom:1px solid var(--line)}
+.badge{display:inline-block;font-size:14px;font-weight:600;border-radius:12px;padding:2px 11px;border:1px solid;white-space:nowrap}
+.badge.ok{color:var(--green);background:var(--green-bg);border-color:transparent}
+.badge.sh{color:var(--red);background:var(--red-bg);border-color:var(--red)}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:16px;margin-bottom:22px;min-height:44px}
+.titleline{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.detail{margin-bottom:0}
+.detail div{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:16px;border-top:1px solid var(--line);padding:16px 0}
+.detail div:last-child{border-bottom:1px solid var(--line)}
+.detail dt{color:var(--muted)}
+.detail dd{margin:0;font-weight:600}
+.detail .bar{height:12px;margin-top:8px}
+
+</style>
+</head>
+<body>
+
+<nav aria-label="Main">
+  <div class="brand">AI Governance</div>
+  <div class="when">November 2026, as of Nov 24</div>
+  <a href="#overview"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4v-9z"/></svg>Overview</a>
+  <a href="#budget"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18l5-6 4 3 7-9"/><path d="M4 21h16"/></svg>Budget</a>
+  <a href="#teams"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 12h9M5 18h12"/></svg>Teams</a>
+  <a href="#unapproved"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18h0"/></svg>Unapproved</a>
+  <a href="#tools"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M4 15h16"/></svg>Tools</a>
+</nav>
+
+<main>
+
+  <!-- 1. Overview -->
+  <section class="screen" id="overview">
+    <p class="phonehead"><b>AI Governance</b>November 2026, as of Nov 24</p>
+    <div class="alert" role="alert">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18h0"/></svg>
+      <div>5 unapproved AI tools found. Marketing has used 94% of its monthly budget.</div>
+    </div>
+    <h1 tabindex="-1">Where we stand on AI this month</h1>
+    <dl class="facts body">
+      <div class="fact"><dt>Spent on AI</dt><dd>₹42.8L <small>of ₹50L</small></dd><div class="why"><b class="a">86% of the budget used</b>, with 6 days left</div></div>
+      <div class="fact"><dt>Unapproved tools</dt><dd class="r">5</dd><div class="why">6 tools are approved. <b class="r">209 people</b> use one that isn’t.</div></div>
+      <div class="fact"><dt>Paid seats actually used</dt><dd>74%</dd><div class="why"><b class="r">₹3.3L a month</b> goes to seats nobody uses</div></div>
+      <div class="fact"><dt>Teams over budget</dt><dd class="r">2 <small>of 5</small></dd><div class="why"><b class="r">Engineering and Product.</b> Marketing is close.</div></div>
+    </dl>
+    <a class="next" href="#budget">Next: are we within budget?</a>
+  </section>
+
+  <!-- 2. Budget -->
+  <section class="screen" id="budget">
+    <h1 tabindex="-1">Are we within budget?</h1>
+    <p class="take" id="lcap"></p>
+    <div class="body">
+      <div class="picks">
+        <label>Month
+          <select id="selM"><option value="nov">November 2026</option><option value="oct">October 2026</option><option value="sep">September 2026</option></select></label>
+        <label>Department
+          <select id="selD"><option value="All">All departments</option><option>Engineering</option><option>Marketing</option><option>Sales</option><option>Product</option><option>Ops</option></select></label>
+      </div>
+      <div class="lbox" id="lbox"><svg id="line" role="img"></svg><div class="tip" id="tip"></div></div>
+    </div>
+    <a class="next" href="#teams">Next: which teams are over budget?</a>
+  </section>
+
+  <!-- 3. Teams -->
+  <section class="screen" id="teams">
+    <h1 tabindex="-1">Which teams are over budget?</h1>
+    <p class="take"><b class="r">Engineering and Product.</b> Together they are ₹1.9L over. Sales and Ops have ₹8.5L unused, enough to cover both.</p>
+    <div class="body" id="depts"></div>
+    <p class="hint">The white mark on each bar is that team’s budget.</p>
+    <a class="next" href="#unapproved">Next: how much goes to unapproved tools?</a>
+  </section>
+
+  <!-- 4. Unapproved tools -->
+  <section class="screen" id="unapproved">
+    <h1 tabindex="-1">How much goes to unapproved tools?</h1>
+    <p class="take"><b class="r">₹7.4L a month, and 209 people.</b> None of these tools has a contract or a security check.</p>
+    <div class="body">
+      <div class="sides">
+        <div class="side"><h2 class="g">Approved</h2><div class="n">₹35.4L</div><p>6 tools, 356 people</p></div>
+        <div class="side"><h2 class="r">Unapproved</h2><div class="n">₹7.4L</div><p>5 tools, 209 people</p></div>
+      </div>
+      <p class="sub">The 5 unapproved tools, by people using them</p>
+      <div id="shadow"></div>
+    </div>
+    <a class="next" href="#tools">Next: see every AI tool</a>
+  </section>
+
+  <!-- 5. Tools -->
+  <section class="screen" id="tools">
+    <h1 tabindex="-1">Every AI tool in use</h1>
+    <p class="take">Unapproved tools are listed first. Select a tool to see its details.</p>
+    <div class="body list" id="toollist"></div>
+  </section>
+
+  <!-- 6. One tool, view only -->
+  <section class="screen" id="tool"></section>
+
+</main>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var K = function(n){ return n >= 100000 ? '₹' + (n/100000).toFixed(1).replace(/\.0$/,'') + 'L' : '₹' + Math.round(n/1000) + 'K'; };
+  /* ---------- Budget chart ---------- */
+  var drawBudget = (function(){
+    var MONTHS={
+      sep:{name:'September', short:'Sep', days:30, today:30, dow:2},
+      oct:{name:'October',   short:'Oct', days:31, today:31, dow:4},
+      nov:{name:'November',  short:'Nov', days:30, today:24, dow:0}
+    };
+    var BUDGET={All:50, Engineering:20, Marketing:10, Sales:8, Product:6, Ops:6}; // ₹ lakh per month
+    var DATA={ // [spent so far, expected at month end]; finished months have one value
+      sep:{All:[38.9], Engineering:[17.2], Marketing:[8.1],  Sales:[5.2], Product:[4.9], Ops:[3.5]},
+      oct:{All:[46.1], Engineering:[20.6], Marketing:[10.4], Sales:[4.9], Product:[5.8], Ops:[4.4]},
+      nov:{All:[42.8,53.5], Engineering:[21.4,26.8], Marketing:[9.4,11.8], Sales:[3.6,4.5], Product:[6.5,8.1], Ops:[1.9,2.4]}
+    };
+    var state={m:'nov', d:'All'}, cur;
+    var L2=function(v){ return '₹'+v.toFixed(1).replace(/\.0$/,'')+'L'; };
+
+    function render(){
+      var W=$('lbox').clientWidth; if (!W) return;          // screen not visible yet
+      var H=W<480?300:360, L=4, R=W-4, T=48, B=H-34;
+      var svg=$('line'); svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.style.height=H+'px';
+      var M=MONTHS[state.m], row=DATA[state.m][state.d];
+      var DAYS=M.days, TODAY=M.today, done=TODAY===DAYS;
+      var SPENT=row[0], CEIL=BUDGET[state.d], END=done?SPENT:row[1];
+      var Who=state.d==='All'?'The company':state.d, who=state.d==='All'?'the company':state.d;
+      var MAX=Math.max(CEIL,END)*1.22;
+      var x=function(d){ return L+(d-1)/(DAYS-1)*(R-L); }, y=function(v){ return B-v/MAX*(B-T); };
+      var run=[], sum=0, d;
+      for (d=1; d<=TODAY; d++){ var wd=(M.dow+d-1)%7; sum += (wd===0||wd===6) ? 0.3 : 1+0.02*d; run.push(sum); }
+      var series=run.map(function(v){ return v/sum*SPENT; });
+      var rate=done?0:(END-SPENT)/(DAYS-TODAY);
+      var val=function(d){ return d<=TODAY ? series[d-1] : SPENT+rate*(d-TODAY); };
+      var over=END>CEIL, cross=null;
+      if (over){ for (d=1; d<=DAYS; d++){ if (val(d)>=CEIL){ var pv=d>1?val(d-1):0; cross=d-1+(CEIL-pv)/(val(d)-pv); break; } } }
+      var future=over && cross>TODAY;
+      var endCls=over?'red':'grn', endCol=over?'var(--red)':'var(--green)';
+
+      var s='';
+      s+='<line class="ax" x1="'+L+'" x2="'+R+'" y1="'+B+'" y2="'+B+'"/>';
+      s+='<text class="tk" x="'+L+'" y="'+(B+24)+'">'+M.short+' 1</text>';
+      s+='<text class="tk" x="'+R+'" y="'+(B+24)+'" text-anchor="end">'+M.short+' '+DAYS+'</text>';
+      var line=series.map(function(v,i){ return x(i+1)+','+y(v); }).join(' ');
+      s+='<polygon fill="var(--ink)" opacity=".08" points="'+x(1)+','+B+' '+line+' '+x(TODAY)+','+B+'"/>';
+      if (over){
+        var pg=[x(cross)+','+y(CEIL)];
+        for (d=Math.ceil(cross); d<=DAYS; d++){ if (val(d)>=CEIL) pg.push(x(d)+','+y(val(d))); }
+        pg.push(x(DAYS)+','+y(CEIL));
+        s+='<polygon fill="var(--red)" opacity=".3" points="'+pg.join(' ')+'"/>';
+      }
+      s+='<line x1="'+L+'" x2="'+R+'" y1="'+y(CEIL)+'" y2="'+y(CEIL)+'" stroke="var(--red)" stroke-width="2"/>';
+      s+='<text class="lb red" x="'+(L+2)+'" y="'+(y(CEIL)-11)+'">Budget '+L2(CEIL)+'</text>';
+      s+='<polyline points="'+line+'" fill="none" stroke="var(--ink)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>';
+      if (!done){
+        s+='<line x1="'+x(TODAY)+'" y1="'+y(SPENT)+'" x2="'+x(DAYS)+'" y2="'+y(END)+'" stroke="var(--ink)" stroke-width="3" stroke-dasharray="6 5"/>';
+        s+='<line x1="'+x(TODAY)+'" x2="'+x(TODAY)+'" y1="'+y(SPENT)+'" y2="'+B+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 4"/>';
+        var tight=(R-x(TODAY))<100;
+        s+='<text class="tk" x="'+(tight?x(TODAY)+4:x(TODAY))+'" y="'+(B+24)+'" text-anchor="'+(tight?'end':'middle')+'">Today</text>';
+        s+='<circle cx="'+x(TODAY)+'" cy="'+y(SPENT)+'" r="6" fill="var(--ink)" stroke="var(--ground)" stroke-width="2.5"/>';
+        if (future && y(SPENT)-y(CEIL)<40) s+='<text class="lb" x="'+Math.min(x(TODAY)+12, R-112)+'" y="'+(y(SPENT)+34)+'">'+L2(SPENT)+' so far</text>';
+        else s+='<text class="lb" x="'+(x(TODAY)-12)+'" y="'+(y(SPENT)-13)+'" text-anchor="end">'+L2(SPENT)+' so far</text>';
+      }
+      s+='<circle cx="'+x(DAYS)+'" cy="'+y(END)+'" r="6" fill="'+endCol+'" stroke="var(--ground)" stroke-width="2.5"/>';
+      s+='<text class="lb '+endCls+'" x="'+R+'" y="'+(over ? y(END)-15 : (y(END)-y(CEIL)<46 ? y(CEIL)-11 : y(END)-15))+'" text-anchor="end">'+L2(END)+(done?' final':' expected')+'</text>';
+      s+='<line id="hl" y1="'+T+'" y2="'+B+'" stroke="var(--ink)" stroke-width="1" opacity=".5" visibility="hidden"/><circle id="hd" r="5" fill="var(--ink)" stroke="var(--ground)" stroke-width="2" visibility="hidden"/>';
+      svg.innerHTML=s;
+
+      var cap, when=over?M.short+' '+Math.max(1,Math.round(cross)):'';
+      if (done && over) cap='<b class="r">No. '+Who+' ended '+M.name+' '+L2(SPENT-CEIL)+' over.</b> It spent '+L2(SPENT)+' against a '+L2(CEIL)+' budget, which ran out on '+when+'.';
+      else if (done) cap='<b class="g">Yes. '+Who+' ended '+M.name+' '+L2(CEIL-SPENT)+' under.</b> It spent '+L2(SPENT)+' against a '+L2(CEIL)+' budget.';
+      else if (over && !future) cap='<b class="r">No. '+Who+' went over budget on '+when+'.</b> It is expected to end the month at '+L2(END)+', which is '+L2(END-CEIL)+' over.';
+      else if (over) cap='<b class="r">Not at this pace.</b> The budget for '+who+' runs out around '+when+', and the month is expected to end '+L2(END-CEIL)+' over.';
+      else cap='<b class="g">Yes.</b> '+Who+' is expected to end the month at '+L2(END)+', which is '+L2(CEIL-END)+' under budget.';
+      $('lcap').innerHTML=cap;
+      svg.setAttribute('aria-label','Line chart of AI spend for '+who+' in '+M.name+'. '+$('lcap').textContent);
+      cur={M:M, DAYS:DAYS, TODAY:TODAY, L:L, R:R, x:x, y:y, val:val};
+    }
+    $('selM').addEventListener('change', function(){ state.m=this.value; hide(); render(); });
+    $('selD').addEventListener('change', function(){ state.d=this.value; hide(); render(); });
+    window.addEventListener('resize', function(){ hide(); render(); });
+
+    var box=$('lbox'), tip=$('tip');
+    function hide(){ tip.style.display='none'; var a=$('hl'), b=$('hd'); if(a){ a.setAttribute('visibility','hidden'); b.setAttribute('visibility','hidden'); } }
+    function point(clientX){
+      var r=$('line').getBoundingClientRect(), c=cur; if(!c) return;
+      var d=Math.round(((clientX-r.left)-c.L)/(c.R-c.L)*(c.DAYS-1))+1;
+      if (d<1 || d>c.DAYS){ hide(); return; }
+      var v=c.val(d);
+      $('hl').setAttribute('x1',c.x(d)); $('hl').setAttribute('x2',c.x(d)); $('hl').setAttribute('visibility','visible');
+      $('hd').setAttribute('cx',c.x(d)); $('hd').setAttribute('cy',c.y(v)); $('hd').setAttribute('visibility','visible');
+      tip.innerHTML='<b>'+c.M.short+' '+d+':</b> '+L2(v)+(d<=c.TODAY?' spent':' expected');
+      tip.style.left=Math.min(Math.max(c.x(d),80),r.width-80)+'px';
+      tip.style.top=c.y(v)+'px';
+      tip.style.display='block';
+    }
+    box.addEventListener('mousemove', function(e){ point(e.clientX); });
+    box.addEventListener('touchstart', function(e){ point(e.touches[0].clientX); }, {passive:true});
+    box.addEventListener('touchmove', function(e){ point(e.touches[0].clientX); }, {passive:true});
+    box.addEventListener('mouseleave', hide);
+    return render;
+  })();
+
+  /* ---------- Teams ---------- */
+  var depts=[['Engineering',2140000,2000000],['Marketing',940000,1000000],['Sales',360000,800000],['Product',650000,600000],['Ops',190000,600000]];
+  var SC=1.2;
+  $('depts').innerHTML=depts.map(function(d){
+    var p=d[1]/d[2], pct=Math.round(p*100);
+    var c = p>1 ? 'r' : p>=0.85 ? 'a' : 'g';
+    var word = p>1 ? K(d[1]-d[2])+' over' : p>=0.85 ? 'Close, '+pct+'% used' : pct+'% used';
+    return '<div class="drow"><span class="nm">'+d[0]+'</span>'
+      +'<div class="bar" role="img" aria-label="'+d[0]+': '+K(d[1])+' of '+K(d[2])+', '+pct+'%"><i class="f'+c+'" style="width:'+Math.min(p/SC*100,100)+'%"></i><u style="left:'+(100/SC)+'%"></u></div>'
+      +'<div class="tx"><span>'+K(d[1])+' of '+K(d[2])+'</span><b class="'+c+'">'+word+'</b></div></div>';
+  }).join('');
+
+  /* ---------- Tools ---------- */
+  var tools=[
+    {n:'ChatGPT Enterprise', ok:1, dept:'All departments',       users:135, spend:960000,  limit:1000000, src:'Vendor report', idle:25, save:150000},
+    {n:'Microsoft Copilot',  ok:1, dept:'Sales, Ops',            users:80,  spend:360000,  limit:400000,  src:'Vendor report', idle:40, save:120000},
+    {n:'Claude',             ok:1, dept:'Engineering, Product',  users:46,  spend:2040000, limit:1800000, src:'Vendor report', idle:4},
+    {n:'GitHub Copilot',     ok:1, dept:'Engineering',           users:45,  spend:100000,  limit:120000,  src:'Vendor report', idle:5},
+    {n:'Notion AI',          ok:1, dept:'Product, Marketing',    users:30,  spend:60000,   limit:60000,   src:'Work login',    idle:30, save:30000},
+    {n:'Grammarly',          ok:1, dept:'Marketing, Sales',      users:20,  spend:20000,   limit:30000,   src:'Work login',    idle:20, save:10000},
+    {n:'Cursor',             ok:0, dept:'Engineering',           users:64,  spend:360000,  src:'Work login'},
+    {n:'Perplexity',         ok:0, dept:'Sales, Marketing',      users:55,  spend:110000,  src:'Work login'},
+    {n:'Midjourney',         ok:0, dept:'Marketing',             users:42,  spend:126000,  src:'Company card'},
+    {n:'Otter.ai',           ok:0, dept:'Sales',                 users:36,  spend:72000,   src:'Company card'},
+    {n:'ElevenLabs',         ok:0, dept:'Marketing',             users:12,  spend:72000,   src:'Company card'}
+  ];
+  tools.forEach(function(t){ t.id=t.n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-$/,''); });
+  var badge=function(t){ return t.ok ? '<span class="badge ok">Approved</span>' : '<span class="badge sh">Unapproved</span>'; };
+  var chev='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+
+  // unapproved tools by people (screen 4)
+  $('shadow').innerHTML=tools.filter(function(t){return !t.ok;}).map(function(t){
+    return '<div class="drow"><span class="nm">'+t.n+'</span>'
+      +'<div class="bar" role="img" aria-label="'+t.n+': '+t.users+' people"><i class="hatch" style="width:'+(t.users/70*100)+'%"></i></div>'
+      +'<div class="tx"><span>'+t.users+' people</span><span>'+K(t.spend)+' a month</span></div></div>';
+  }).join('');
+
+  // tool list (screen 5)
+  function drawList(){
+    var row=function(t){
+      var ds = t.ok ? t.users+' people, '+K(t.spend)+' of '+K(t.limit) : t.users+' people, '+K(t.spend)+' with no budget';
+      return '<a class="tool" href="#tool-'+t.id+'"><span class="nm">'+t.n+'</span><span class="ds">'+ds+'</span><span class="go">'+badge(t)+chev+'</span></a>';
+    };
+    $('toollist').innerHTML='<p class="group">Unapproved, 5 tools</p>'+tools.filter(function(t){return !t.ok;}).map(row).join('')
+      +'<p class="group">Approved, 6 tools</p>'+tools.filter(function(t){return t.ok;}).map(row).join('');
+  }
+
+  // one tool, view only (screen 6)
+  function drawTool(t){
+    var say;
+    if (!t.ok) say='<b class="r">'+t.users+' people use this with no contract or security check.</b> No budget has been approved for it.';
+    else if (t.idle>=20) say='<b class="a">'+t.idle+' paid seats aren’t being used.</b> They cost about '+K(t.save)+' a month.';
+    else if (t.spend>t.limit) say='<b class="r">Spending is '+K(t.spend-t.limit)+' over this tool’s budget.</b>';
+    else say='<b class="g">This tool is within budget.</b>';
+    var spend;
+    if (t.ok){ var p=t.spend/t.limit, c=p>1?'r':p>=0.85?'a':'g';
+      spend=K(t.spend)+' of '+K(t.limit)+' <span class="'+c+'">('+Math.round(p*100)+'%)</span><div class="bar"><i class="f'+c+'" style="width:'+Math.min(p*100,100)+'%"></i></div>'; }
+    else spend=K(t.spend)+', no budget approved';
+    $('tool').innerHTML='<a class="back" href="#tools"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>All tools</a>'
+      +'<div class="titleline"><h1 tabindex="-1">'+t.n+'</h1>'+badge(t)+'</div>'
+      +'<p class="take">'+say+'</p>'
+      +'<dl class="detail body">'
+      +'<div><dt>Used by</dt><dd>'+t.dept+'</dd></div>'
+      +'<div><dt>People using it</dt><dd>'+t.users+'</dd></div>'
+      +(t.ok ? '<div><dt>Paid seats not in use</dt><dd>'+t.idle+'</dd></div>' : '')
+      +'<div><dt>Spend this month</dt><dd>'+spend+'</dd></div>'
+      +'<div><dt>How we found it</dt><dd>'+t.src+'</dd></div>'
+      +'</dl>';
+  }
+
+  /* ---------- screens ---------- */
+  function show(h, moved){
+    var id=h || 'overview', t=null;
+    if (id.indexOf('tool-')===0){ t=tools.filter(function(o){ return 'tool-'+o.id===id; })[0]; id = t ? 'tool' : 'tools'; }
+    if (!$(id) || !$(id).classList.contains('screen')) id='overview';
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.toggle('on', s.id===id); });
+    var tab = id==='tool' ? 'tools' : id;
+    document.querySelectorAll('nav a').forEach(function(a){
+      if (a.getAttribute('href')==='#'+tab) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
+    });
+    if (id==='budget') drawBudget();
+    if (id==='tools') drawList();
+    if (id==='tool') drawTool(t);
+    window.scrollTo(0,0);
+    var h1=$(id).querySelector('h1'); if (h1 && moved) h1.focus({preventScroll:true});
+  }
+  // Every link between screens is handled here, so it works even where the
+  // browser or a preview window blocks ordinary "#" links.
+  document.addEventListener('click', function(e){
+    var a=e.target.closest ? e.target.closest('a[href^="#"]') : null; if (!a) return;
+    e.preventDefault();
+    var h=a.getAttribute('href').slice(1);
+    try { history.pushState(null, '', '#'+h); } catch (err) {}
+    show(h, true);
+  });
+  window.addEventListener('popstate', function(){ show(location.hash.slice(1), true); });
+  show(location.hash.slice(1), false);
+})();
+</script>
+</body>
+</html>
