@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Governance &amp; Shadow AI Spend Dashboard (wireframe)</title>
+<style>
+:root{
+  color-scheme: dark;
+  --ground:#13161C; --surface:#1C2029; --ink:#ECEFF4; --muted:#A4ACBA;
+  --line:#394150; --track:#2B313D; --hover:#262C37;
+  --green:#6CCB9A; --green-bg:#1C3228;
+  --amber:#F0C060; --amber-fill:#D99A1C; --amber-bg:#3A2E12; --amber-line:#A87A14;
+  --red:#F28B7C; --red-bg:#3B201C; --red-soft:#7A3A31;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:14.5px;line-height:1.4;font-variant-numeric:tabular-nums}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.wrap{max-width:1440px;margin:0 auto;padding:0 20px 36px}
+
+/* 1. top bar and banner */
+.top{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:14px 0}
+.top h1{margin:0;font-size:17px;font-weight:650}
+.top h1 span{font-weight:400;color:var(--muted);font-size:14px;margin-left:8px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.filters label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+select{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px;min-height:38px}
+.sample{font-size:12.5px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:6px 9px}
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber);
+  border-radius:8px;padding:11px 14px;font-weight:600;margin-bottom:14px}
+.banner svg{flex:none;margin-top:1px}
+.banner .sep{opacity:.5;margin:0 8px;font-weight:400}
+
+/* 2. KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.kpi h2{margin:0;font-size:13px;font-weight:500;color:var(--muted)}
+.kpi .big{font-size:26px;font-weight:650;margin:4px 0 6px;letter-spacing:-0.01em}
+.kpi .big small{font-size:16px;font-weight:500;color:var(--muted)}
+.kpi .sub{font-size:13px;color:var(--muted)}
+.meter{height:8px;background:var(--track);border-radius:4px;overflow:hidden;margin:2px 0 7px}
+.meter i{display:block;height:100%}
+.g{color:var(--green)} .a{color:var(--amber)} .r{color:var(--red)}
+.fg{background:var(--green)} .fa{background:var(--amber-fill)} .fr{background:var(--red)}
+.split{display:flex;gap:6px;height:8px;margin:2px 0 7px}
+.split i{display:block;border-radius:4px}
+
+/* 3. charts */
+.charts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.chart h2{margin:0;font-size:15px;font-weight:650}
+.chart .q{margin:2px 0 12px;font-size:13px;color:var(--muted)}
+.chart svg{width:100%;height:auto;display:block}
+.cap{margin:10px 0 0;padding-top:9px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.cap b{color:var(--ink);font-weight:600}
+.key{display:flex;flex-wrap:wrap;gap:4px 14px;list-style:none;margin:0 0 10px;padding:0;font-size:12.5px;color:var(--muted)}
+.key li{display:flex;align-items:center;gap:5px}
+.key i{display:inline-block;width:14px;height:9px;border-radius:2px}
+.key .ln{height:0;border-top:2px solid var(--ink);width:16px;border-radius:0}
+.key .dash{height:0;border-top:2px dashed var(--ink);width:16px;border-radius:0}
+.key .ceil{height:0;border-top:2px solid var(--red);width:16px;border-radius:0}
+.key .pace{height:0;border-top:2px dotted var(--muted);width:16px;border-radius:0}
+.lbox{position:relative}
+.togs{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 12px}
+.togs label{display:grid;gap:3px;font-size:12.5px;color:var(--muted);flex:1 1 140px}
+.togs select{width:100%;color:var(--ink)}
+.lb.grn{fill:var(--green)}
+.tip{position:absolute;display:none;pointer-events:none;background:var(--ink);color:var(--ground);font-size:12.5px;line-height:1.35;padding:6px 9px;border-radius:5px;white-space:nowrap;transform:translate(-50%,calc(-100% - 12px))}
+.tip b{font-weight:650}
+.key .tick{width:2px;height:13px;background:var(--ink);border-radius:0}
+.ax{stroke:var(--line);stroke-width:1}
+.tk{fill:var(--muted);font-size:11px}
+.lb{fill:var(--ink);font-size:12px;font-weight:600;paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.lb.red{fill:var(--red)}
+
+.drow{display:grid;grid-template-columns:92px minmax(0,1fr);gap:3px 10px;align-items:center;margin-bottom:11px}
+.drow .nm{font-weight:600}
+.drow .tx{grid-column:2;font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.drow .tx b{font-weight:600}
+.bar{position:relative;height:16px;background:var(--track);border-radius:3px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.bar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+
+.grp{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:650;padding:6px 0 4px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.grp span{font-weight:400;font-size:12.5px;color:var(--muted)}
+.grp + .trow{margin-top:0}
+.trow{display:grid;grid-template-columns:112px minmax(0,1fr);gap:2px 10px;align-items:center;margin-bottom:9px}
+.trow .nm{font-weight:500;grid-row:span 2;align-self:center}
+.mini{display:grid;grid-template-columns:minmax(0,1fr) 78px;gap:8px;align-items:center;font-size:12.5px;color:var(--muted)}
+.mini .bar{height:9px}
+.fu{background:var(--muted)}
+.hatch{background:repeating-linear-gradient(135deg,var(--red) 0 3px,var(--red-soft) 3px 6px)}
+
+/* 4. action table */
+.tablecard{padding:14px 0 4px}
+.tablecard .hd{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:space-between;align-items:baseline;padding:0 16px 10px}
+.tablecard h2{margin:0;font-size:15px;font-weight:650}
+.tablecard .hd span{font-size:13px;color:var(--muted)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:980px}
+th{text-align:left;font-size:12.5px;font-weight:600;color:var(--muted);padding:8px 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.num{text-align:right} th.num{text-align:right}
+td .t{font-weight:600}
+.badge{display:inline-block;font-size:12px;font-weight:600;border-radius:10px;padding:1px 9px;border:1px solid;white-space:nowrap}
+.badge.ok{color:var(--green);background:var(--green-bg);border-color:transparent}
+.badge.sh{color:var(--red);background:var(--red-bg);border-color:var(--red)}
+.badge.bl{color:var(--muted);background:var(--track);border-color:transparent}
+.src{font-size:12.5px;border:1px solid var(--line);border-radius:4px;padding:1px 7px;white-space:nowrap}
+.sl{display:grid;grid-template-columns:120px auto;gap:10px;align-items:center;font-size:13px;white-space:nowrap}
+.sl .bar{height:10px}
+.act{border:1px solid var(--ink);background:var(--surface);border-radius:6px;padding:5px 12px;min-height:34px;font-weight:600;white-space:nowrap}
+.act:hover{background:var(--hover)}
+.act.danger{border-color:var(--red);color:var(--red)}
+.act[disabled]{cursor:default;border-color:transparent;background:var(--track);color:var(--muted)}
+.empty{padding:18px 16px;color:var(--muted)}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 14px;border-radius:6px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+@media (max-width:1100px){ .charts{grid-template-columns:minmax(0,1fr)} .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:520px){ .kpis{grid-template-columns:minmax(0,1fr)} .banner .sep{display:none} .banner span{display:block} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1. Top bar and alert banner -->
+  <header class="top">
+    <h1>AI Governance &amp; Shadow AI Spend <span>Company overview</span></h1>
+    <div class="filters">
+      <span class="sample">Wireframe, sample data</span>
+      <span style="font-size:13px;color:var(--muted)">November 2026, as of Nov 24</span>
+    </div>
+  </header>
+
+  <div class="banner" role="alert">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18h0"/></svg>
+    <div><span>5 Unapproved Shadow AI Tools Detected</span><span class="sep">|</span><span>Marketing at 94% of Monthly Spend Limit</span></div>
+  </div>
+
+  <!-- 2. Four KPI cards -->
+  <section class="kpis" aria-label="Key numbers">
+    <div class="card kpi">
+      <h2>Monthly AI spend vs. cap</h2>
+      <div class="big">₹42.8L <small>/ ₹50L</small></div>
+      <div class="meter" role="img" aria-label="86% of the monthly cap used"><i class="fa" style="width:85.6%"></i></div>
+      <div class="sub"><span class="a"><b>86% used</b></span> with 6 days left in the month</div>
+    </div>
+    <div class="card kpi">
+      <h2>Approved vs. Shadow AI tools</h2>
+      <div class="big"><span class="g">6</span> <small>Approved</small> <small>|</small> <span class="r">5</span> <small>Unapproved</small></div>
+      <div class="split" role="img" aria-label="6 approved tools, 5 unapproved tools"><i class="fg" style="flex:6"></i><i class="hatch" style="flex:5"></i></div>
+      <div class="sub">209 people use an unapproved tool</div>
+    </div>
+    <div class="card kpi">
+      <h2>Paid seat utilization</h2>
+      <div class="big">74% <small>used</small></div>
+      <div class="meter" role="img" aria-label="74% of paid seats in use"><i class="fa" style="width:74%"></i></div>
+      <div class="sub"><span class="r"><b>₹3.3L wasted</b></span> on 124 idle seats</div>
+    </div>
+    <div class="card kpi">
+      <h2>Teams over budget</h2>
+      <div class="big"><span class="r">2 Teams</span></div>
+      <div class="sub" style="margin-top:17px">Engineering and Product are over; Marketing is close</div>
+    </div>
+  </section>
+
+  <!-- 3. Three core charts -->
+  <section class="charts">
+    <div class="card chart">
+      <h2>Spend vs. budget ceiling</h2>
+      <p class="q" id="lq"></p>
+      <div class="togs">
+        <label>Month
+          <select id="selM">
+            <option value="nov">November 2026</option><option value="oct">October 2026</option><option value="sep">September 2026</option>
+          </select></label>
+        <label>Department
+          <select id="selD">
+            <option value="All">All departments</option><option>Engineering</option><option>Marketing</option><option>Sales</option><option>Product</option><option>Ops</option>
+          </select></label>
+      </div>
+      <ul class="key"><li><i class="ln"></i>Spent</li><li><i class="dash"></i>Projected</li><li><i class="pace"></i>On-budget pace</li><li><i class="ceil"></i>Ceiling or limit</li></ul>
+      <div class="lbox" id="lbox">
+        <svg id="line" viewBox="0 0 420 340" role="img"></svg>
+        <div class="tip" id="tip"></div>
+      </div>
+      <p class="cap" id="lcap"></p>
+    </div>
+
+    <div class="card chart">
+      <h2>Spend vs. allocated limit by department</h2>
+      <p class="q">Who is over, close, or comfortably within their limit.</p>
+      <ul class="key"><li><i class="fg"></i>Within limit</li><li><i class="fa"></i>Close (85%+)</li><li><i class="fr"></i>Over limit</li><li><i class="tick"></i>Limit</li></ul>
+      <div id="depts"></div>
+      <p class="cap">Sales and Ops have <b>₹8.5L unused</b> between them, more than enough to cover the two teams that are over.</p>
+    </div>
+
+    <div class="card chart">
+      <h2>Approved tools vs. Shadow AI tools</h2>
+      <p class="q">People using each tool, and what it costs us.</p>
+      <ul class="key"><li><i class="fu"></i>Active users</li><li><i class="fg"></i>Spend, approved</li><li><i class="hatch"></i>Spend, unapproved</li></ul>
+      <div id="compare"></div>
+      <p class="cap">Top three tools in each group. Shadow AI is <b>17% of spend</b> but reaches <b>209 people</b> with no contract in place.</p>
+    </div>
+  </section>
+
+  <!-- 4. Action table -->
+  <section class="card tablecard">
+    <div class="hd"><h2>AI tools and actions</h2><span id="count"></span></div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th>AI tool</th><th>Status</th><th>Department</th><th class="num">Active users</th>
+          <th>Spend vs. limit</th><th>Discovery source</th><th>Action</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var K = function(n){ return n >= 100000 ? '₹' + (n/100000).toFixed(1).replace(/\.0$/,'') + 'L' : '₹' + Math.round(n/1000) + 'K'; };
+  var tt;
+  function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove('on');},2200); }
+
+  /* ----- Chart 1: spend vs. ceiling, by month and by department ----- */
+  (function(){
+    var MONTHS={
+      sep:{name:'September', short:'Sep', days:30, today:30, dow:2},
+      oct:{name:'October',   short:'Oct', days:31, today:31, dow:4},
+      nov:{name:'November',  short:'Nov', days:30, today:24, dow:0}  // in progress
+    };
+    var LIMIT={All:50, Engineering:20, Marketing:10, Sales:8, Product:6, Ops:6}; // ₹ lakh per month
+    var DATA={ // [spent so far, projected month end] in ₹ lakh; finished months have one value
+      sep:{All:[38.9], Engineering:[17.2], Marketing:[8.1],  Sales:[5.2], Product:[4.9], Ops:[3.5]},
+      oct:{All:[46.1], Engineering:[20.6], Marketing:[10.4], Sales:[4.9], Product:[5.8], Ops:[4.4]},
+      nov:{All:[42.8,53.5], Engineering:[21.4,26.8], Marketing:[9.4,11.8], Sales:[3.6,4.5], Product:[6.5,8.1], Ops:[1.9,2.4]}
+    };
+    var state={m:'nov', d:'All'}, cur;
+    var L=40, R=300, T=22, B=300;
+    var L2=function(v){ return '₹'+v.toFixed(1).replace(/\.0$/,'')+'L'; };
+
+    function render(){
+      var M=MONTHS[state.m], row=DATA[state.m][state.d];
+      var DAYS=M.days, TODAY=M.today, done=TODAY===DAYS;
+      var SPENT=row[0], CEIL=LIMIT[state.d], END=done?SPENT:row[1];
+      var word=state.d==='All'?'ceiling':'limit', who=state.d==='All'?'The company':state.d;
+      var MAX=90; [3,6,9,12,15,24,30,45,60,90].some(function(c){ if(c>=Math.max(CEIL,END)*1.1){ MAX=c; return true; } });
+      var x=function(d){ return L+(d-1)/(DAYS-1)*(R-L); }, y=function(v){ return B-v/MAX*(B-T); };
+      // running total: quieter weekends, slowly rising weekdays
+      var run=[], sum=0, d;
+      for (d=1; d<=TODAY; d++){ var wd=(M.dow+d-1)%7; sum += (wd===0||wd===6) ? 0.3 : 1+0.02*d; run.push(sum); }
+      var series=run.map(function(v){ return v/sum*SPENT; });
+      var rate=done?0:(END-SPENT)/(DAYS-TODAY);
+      var val=function(d){ return d<=TODAY ? series[d-1] : SPENT+rate*(d-TODAY); };
+      var pace=function(d){ return CEIL*d/DAYS; };
+      var over=END>CEIL, cross=null;
+      if (over){ for (d=1; d<=DAYS; d++){ if (val(d)>=CEIL){ var pv=d>1?val(d-1):0; cross=d-1+(CEIL-pv)/(val(d)-pv); break; } } }
+      var endCls=over?'red':'grn', endCol=over?'var(--red)':'var(--green)';
+
+      var s='';
+      [0,1,2,3].forEach(function(i){ var v=MAX/3*i;
+        s+='<line class="ax" x1="'+L+'" x2="'+R+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text class="tk" x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">₹'+v+'L</text>';
+      });
+      [1,8,15,22,DAYS].forEach(function(t){ s+='<text class="tk" x="'+x(t)+'" y="'+(B+18)+'" text-anchor="middle">'+M.short+' '+t+'</text>'; });
+      var line=series.map(function(v,i){ return x(i+1)+','+y(v); }).join(' ');
+      s+='<polygon fill="var(--ink)" opacity=".08" points="'+x(1)+','+B+' '+line+' '+x(TODAY)+','+B+'"/>';
+      if (over){
+        var pg=[x(cross)+','+y(CEIL)];
+        for (d=Math.ceil(cross); d<=DAYS; d++){ if (val(d)>=CEIL) pg.push(x(d)+','+y(val(d))); }
+        pg.push(x(DAYS)+','+y(CEIL));
+        s+='<polygon fill="var(--red)" opacity=".28" points="'+pg.join(' ')+'"/>';
+      }
+      if (!done){
+        s+='<line x1="'+x(TODAY)+'" x2="'+x(TODAY)+'" y1="'+T+'" y2="'+B+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 4"/>';
+        s+='<text class="tk" x="'+x(TODAY)+'" y="'+(T-8)+'" text-anchor="middle">Today, '+M.short+' '+TODAY+'</text>';
+      }
+      s+='<line x1="'+x(1)+'" y1="'+y(pace(1))+'" x2="'+x(DAYS)+'" y2="'+y(CEIL)+'" stroke="var(--muted)" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>';
+      s+='<line x1="'+L+'" x2="'+R+'" y1="'+y(CEIL)+'" y2="'+y(CEIL)+'" stroke="var(--red)" stroke-width="2"/>';
+      s+='<polyline points="'+line+'" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+      if (!done){
+        s+='<line x1="'+x(TODAY)+'" y1="'+y(SPENT)+'" x2="'+x(DAYS)+'" y2="'+y(END)+'" stroke="var(--ink)" stroke-width="2" stroke-dasharray="5 4"/>';
+        s+='<circle cx="'+x(TODAY)+'" cy="'+y(SPENT)+'" r="5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>';
+      }
+      if (over) s+='<circle cx="'+x(cross)+'" cy="'+y(CEIL)+'" r="4.5" fill="var(--surface)" stroke="var(--red)" stroke-width="2.5"/>';
+      s+='<circle cx="'+x(DAYS)+'" cy="'+y(END)+'" r="5" fill="'+endCol+'" stroke="var(--surface)" stroke-width="2"/>';
+      // labels
+      var future=over && cross>TODAY;
+      if (future) s+='<text class="lb red" x="'+(x(cross)-8)+'" y="'+(y(CEIL)-9)+'" text-anchor="end">Hits '+word+' '+M.short+' '+Math.round(cross)+'</text>';
+      if (!done){
+        if (future && y(SPENT)-y(CEIL)<30) s+='<text class="lb" x="'+(x(TODAY)+9)+'" y="'+(y(SPENT)+17)+'">'+L2(SPENT)+' spent</text>';
+        else s+='<text class="lb" x="'+(x(TODAY)-9)+'" y="'+(y(SPENT)-9)+'" text-anchor="end">'+L2(SPENT)+' spent</text>';
+      }
+      var ly1=y(END)+4, ly2=y(CEIL)+4;
+      if (Math.abs(ly1-ly2)<14){ var mid=(ly1+ly2)/2; if (ly1<=ly2){ ly1=mid-7; ly2=mid+7; } else { ly1=mid+7; ly2=mid-7; } }
+      s+='<text class="lb '+endCls+'" x="'+(R+9)+'" y="'+ly1+'">'+L2(END)+(done?' final':' projected')+'</text>';
+      s+='<text class="lb" x="'+(R+9)+'" y="'+ly2+'" style="font-weight:500;fill:var(--muted)">'+L2(CEIL)+' '+word+'</text>';
+      s+='<line id="hl" y1="'+T+'" y2="'+B+'" stroke="var(--ink)" stroke-width="1" opacity=".55" visibility="hidden"/><circle id="hd" r="4.5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>';
+      $('line').innerHTML=s;
+
+      // plain-language summary
+      var gap=SPENT-pace(TODAY), cap, when=over?M.short+' '+Math.max(1,Math.round(cross)):'';
+      if (done && over) cap=who+' ended '+M.name+' at <b>'+L2(SPENT)+'</b>, <span class="r"><b>'+L2(SPENT-CEIL)+' over</b></span> its '+L2(CEIL)+' '+word+', which it passed on <b>'+when+'</b>.';
+      else if (done) cap=who+' ended '+M.name+' at <b>'+L2(SPENT)+'</b>, <span class="g"><b>'+L2(CEIL-SPENT)+' under</b></span> its '+L2(CEIL)+' '+word+'.';
+      else if (over && !future) cap=who+' <span class="r"><b>passed its '+L2(CEIL)+' '+word+' on '+when+'</b></span> and is projected to end the month at <b>'+L2(END)+'</b>, <span class="r"><b>'+L2(END-CEIL)+' over</b></span>.';
+      else if (over) cap=who+' is <b>'+L2(Math.abs(gap))+(gap>=0?' ahead of':' under')+' the on-budget pace</b>. At this rate it hits the '+word+' around <b>'+when+'</b> and ends the month at <b>'+L2(END)+'</b>, <span class="r"><b>'+L2(END-CEIL)+' over</b></span>.';
+      else cap=who+' is <b>'+L2(Math.abs(gap))+(gap>=0?' ahead of':' under')+' the on-budget pace</b> and is projected to end the month at <b>'+L2(END)+'</b>, <span class="g"><b>'+L2(CEIL-END)+' under</b></span> its '+word+'.';
+      $('lcap').innerHTML=cap;
+      $('lq').textContent=(state.d==='All'?'Whole company':state.d)+', '+M.name+' 2026'+(done?'':' (in progress)')+'. Running total against the '+L2(CEIL)+' '+word+'.';
+      $('line').setAttribute('aria-label','Line chart of AI spend. '+$('lcap').textContent);
+      cur={M:M, DAYS:DAYS, TODAY:TODAY, x:x, y:y, val:val, pace:pace};
+    }
+
+    $('selM').addEventListener('change', function(){ state.m=this.value; hide(); render(); });
+    $('selD').addEventListener('change', function(){ state.d=this.value; hide(); render(); });
+
+    // hover: any day's spend (or projection) and its gap to the on-budget pace
+    var box=$('lbox'), tip=$('tip');
+    function hide(){ tip.style.display='none'; var a=$('hl'), b=$('hd'); if(a){ a.setAttribute('visibility','hidden'); b.setAttribute('visibility','hidden'); } }
+    box.addEventListener('mousemove', function(e){
+      var r=$('line').getBoundingClientRect(), k=r.width/420, c=cur;
+      var d=Math.round(((e.clientX-r.left)/k-L)/(R-L)*(c.DAYS-1))+1;
+      if (d<1 || d>c.DAYS){ hide(); return; }
+      var v=c.val(d), gap=v-c.pace(d);
+      $('hl').setAttribute('x1',c.x(d)); $('hl').setAttribute('x2',c.x(d)); $('hl').setAttribute('visibility','visible');
+      $('hd').setAttribute('cx',c.x(d)); $('hd').setAttribute('cy',c.y(v)); $('hd').setAttribute('visibility','visible');
+      tip.innerHTML='<b>'+c.M.short+' '+d+': '+L2(v)+(d<=c.TODAY?' spent':' projected')+'</b><br>'
+        +(Math.abs(gap)<0.05 ? 'On the on-budget pace' : L2(Math.abs(gap))+(gap>0?' ahead of':' under')+' on-budget pace');
+      tip.style.left=Math.min(Math.max(c.x(d)*k,95),r.width-95)+'px';
+      tip.style.top=(c.y(v)*k)+'px';
+      tip.style.display='block';
+    });
+    box.addEventListener('mouseleave', hide);
+    render();
+  })();
+
+  /* ----- Chart 2: spend vs. limit by department ----- */
+  var depts=[['Engineering',2140000,2000000],['Marketing',940000,1000000],['Sales',360000,800000],['Product',650000,600000],['Ops',190000,600000]];
+  var SC=1.2; // bar shows 0 to 120% of each limit
+  $('depts').innerHTML=depts.map(function(d){
+    var p=d[1]/d[2], pct=Math.round(p*100);
+    var c = p>1 ? 'r' : p>=0.85 ? 'a' : 'g';
+    var word = p>1 ? K(d[1]-d[2])+' over limit' : p>=0.85 ? 'Close to limit' : 'Within limit';
+    return '<div class="drow"><span class="nm">'+d[0]+'</span>'
+      +'<div class="bar" role="img" aria-label="'+d[0]+': '+K(d[1])+' of '+K(d[2])+', '+pct+'%"><i class="f'+c+'" style="width:'+Math.min(p/SC*100,100)+'%"></i><u style="left:'+(100/SC)+'%"></u></div>'
+      +'<div class="tx"><span>'+K(d[1])+' of '+K(d[2])+'</span><b class="'+c+'">'+pct+'%, '+word+'</b></div></div>';
+  }).join('');
+
+  /* ----- tool data (drives chart 3 and the table) ----- */
+  var tools=[
+    {n:'ChatGPT Enterprise', ok:1, dept:['All'],                    users:135, spend:960000,  limit:1000000, src:'Vendor API', idle:25},
+    {n:'Microsoft Copilot',  ok:1, dept:['Sales','Ops'],            users:80,  spend:360000,  limit:400000,  src:'Vendor API', idle:40},
+    {n:'Claude',             ok:1, dept:['Engineering','Product'],  users:46,  spend:2040000, limit:1800000, src:'Vendor API', idle:4, note:'includes pay-per-use charges'},
+    {n:'GitHub Copilot',     ok:1, dept:['Engineering'],            users:45,  spend:100000,  limit:120000,  src:'Vendor API', idle:5},
+    {n:'Notion AI',          ok:1, dept:['Product','Marketing'],    users:30,  spend:60000,   limit:60000,   src:'SSO Login',  idle:30},
+    {n:'Grammarly',          ok:1, dept:['Marketing','Sales'],      users:20,  spend:20000,   limit:30000,   src:'SSO Login',  idle:20},
+    {n:'Cursor',             ok:0, dept:['Engineering'],            users:64,  spend:360000,  src:'SSO Login'},
+    {n:'Perplexity',         ok:0, dept:['Sales','Marketing'],      users:55,  spend:110000,  src:'SSO Login'},
+    {n:'Midjourney',         ok:0, dept:['Marketing'],              users:42,  spend:126000,  src:'Corp Card'},
+    {n:'Otter.ai',           ok:0, dept:['Sales'],                  users:36,  spend:72000,   src:'Corp Card'},
+    {n:'ElevenLabs',         ok:0, dept:['Marketing'],              users:12,  spend:72000,   src:'Corp Card'}
+  ];
+
+  /* ----- Chart 3: approved vs. shadow, users and spend ----- */
+  (function(){
+    var pick=function(names){ return names.map(function(n){ return tools.filter(function(t){return t.n===n;})[0]; }); };
+    var MU=150, MS=2100000;
+    var row=function(t){
+      return '<div class="trow"><span class="nm">'+t.n+'</span>'
+        +'<div class="mini"><div class="bar"><i class="fu" style="width:'+(t.users/MU*100)+'%"></i></div><span>'+t.users+' users</span></div>'
+        +'<div class="mini"><div class="bar"><i class="'+(t.ok?'fg':'hatch')+'" style="width:'+Math.max(t.spend/MS*100,1.5)+'%"></i></div><span>'+K(t.spend)+'</span></div></div>';
+    };
+    $('compare').innerHTML =
+      '<div class="grp"><span class="g" style="font-weight:650;font-size:14.5px">Approved</span><span>6 tools, 356 users, ₹35.4L</span></div>'
+      + pick(['ChatGPT Enterprise','Microsoft Copilot','Claude']).map(row).join('')
+      + '<div class="grp" style="margin-top:14px"><span class="r" style="font-weight:650;font-size:14.5px">Unapproved (Shadow AI)</span><span>5 tools, 209 users, ₹7.4L</span></div>'
+      + pick(['Midjourney','Cursor','Perplexity']).map(row).join('');
+  })();
+
+  /* ----- 4. action table ----- */
+  function action(t){
+    if (t.done) return '<button class="act" disabled>'+t.done+'</button>';
+    if (!t.ok) return '<button class="act danger" data-a="block">Block Access</button>';
+    if (t.idle >= 20) return '<button class="act" data-a="reclaim">Reclaim Seats</button>';
+    return '<button class="act" data-a="limit">Edit Limit</button>';
+  }
+  function spendCell(t){
+    if (!t.ok) return '<div class="sl"><div class="bar"><i class="hatch" style="width:100%"></i></div><span><b>'+K(t.spend)+'</b>, no approved budget</span></div>';
+    var p=t.spend/t.limit, c=p>1?'r':p>=0.85?'a':'g';
+    return '<div class="sl"><div class="bar"><i class="f'+c+'" style="width:'+Math.min(p*100,100)+'%"></i></div><span><b>'+K(t.spend)+'</b> of '+K(t.limit)+' <span class="'+c+'">('+Math.round(p*100)+'%)</span></span></div>';
+  }
+  function render(){
+    var f='';
+    var list=tools.filter(function(t){ return !f || t.dept[0]==='All' || t.dept.indexOf(f)>-1; });
+    $('rows').innerHTML=list.map(function(t){
+      var badge = t.blocked ? '<span class="badge bl">Blocked</span>' : t.ok ? '<span class="badge ok">Approved</span>' : '<span class="badge sh">Shadow AI</span>';
+      var sub = t.ok && t.idle>=20 && !t.done ? '<div style="font-size:12.5px;color:var(--muted)">'+t.idle+' idle seats</div>'
+              : t.note ? '<div style="font-size:12.5px;color:var(--muted)">'+t.note+'</div>' : '';
+      return '<tr data-n="'+t.n+'"><td><span class="t">'+t.n+'</span>'+sub+'</td><td>'+badge+'</td>'
+        +'<td>'+(t.dept[0]==='All'?'All departments':t.dept.join(', '))+'</td><td class="num">'+t.users+'</td>'
+        +'<td>'+spendCell(t)+'</td><td><span class="src">'+t.src+'</span></td><td>'+action(t)+'</td></tr>';
+    }).join('') || '<tr><td colspan="7" class="empty">No AI tools found for this department.</td></tr>';
+    $('count').textContent = list.length+' tools'+(f?' used by '+f:'')+', sorted by status then active users';
+  }
+    $('rows').addEventListener('click', function(e){
+    var b=e.target.closest('[data-a]'); if(!b) return;
+    var n=b.closest('tr').getAttribute('data-n'), t=tools.filter(function(o){return o.n===n;})[0], a=b.getAttribute('data-a');
+    if (a==='block'){ t.blocked=true; t.done='Access blocked'; toast(n+' blocked for all employees.'); }
+    else if (a==='reclaim'){ t.done=t.idle+' seats reclaimed'; toast(t.idle+' idle '+n+' seats reclaimed.'); }
+    else { toast('The limit editor for '+n+' would open here.'); return; }
+    render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>
